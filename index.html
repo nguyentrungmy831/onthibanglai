@@ -111,7 +111,10 @@ let view = "home", ex = null, pr = null, timer = null, searchQ = "";
 const $app = document.getElementById("app");
 const $nav = document.getElementById("nav");
 
-function go(v, arg){ view = v; if(v !== "exam" && timer){ clearInterval(timer); timer = null; } if(v === "practice" && arg) startPractice(arg); else render(); window.scrollTo(0,0); }
+let hist = [];
+function go(v, arg){ if(v !== view){ hist.push(view); if(hist.length > 30) hist.shift(); } view = v; if(v !== "exam" && timer){ clearInterval(timer); timer = null; } if(v === "practice" && arg) startPractice(arg); else render(); window.scrollTo(0,0); }
+function goBack(){ let prev = hist.pop() || "home"; if(prev === "examRun" || prev === "result") prev = "home"; if(timer){ clearInterval(timer); timer = null; } view = prev; render(); window.scrollTo(0,0); }
+function backBar(){ return '<div><button class="btn ghost" style="width:auto;min-height:40px;padding:8px 14px;margin-bottom:10px" onclick="goBack()">← Quay lại</button></div>'; }
 
 function renderNav(){
   const items = [["home","⌂","Trang chủ"],["exam","✎","Thi thử"],["topics","☰","Chuyên đề"],["wrong","↺","Câu sai"],["stats","▤","Thống kê"]];
@@ -122,7 +125,7 @@ function renderNav(){
 function render(){
   renderNav();
   const fn = { home:vHome, exam:vExamStart, examRun:vExam, result:vResult, topics:vTopics, list:vList, practice:vPractice, wrong:vWrong, stats:vStats, settings:vSettings }[view] || vHome;
-  $app.innerHTML = fn();
+  $app.innerHTML = (view === "home" || view === "examRun" ? "" : backBar()) + fn();
   if(view === "examRun") tick();
 }
 
@@ -288,7 +291,7 @@ function vTopics(){
     <button onclick="go('practice','__all')"><span>Làm tất cả theo thứ tự ngẫu nhiên</span><span class="num">›</span></button></div>`;
 }
 function openTopic(t){ go('practice', t); }
-function openList(){ view = "list"; render(); }
+function openList(){ go("list"); }
 function vList(){
   const s = searchQ.trim().toLowerCase();
   const items = QUESTIONS.filter(q => !s || String(q.id)===s || q.q.toLowerCase().includes(s)).slice(0,120);
